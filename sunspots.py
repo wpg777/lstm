@@ -1,13 +1,14 @@
-from keras.models import Sequential,load_model
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Embedding
-from keras.layers import LSTM
+from tensorflow.keras import models
+from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 WINDOW=40
 TEST_DATA=40
+LSTM_DIM=700
+DENSE_DIM=70
+EPOCHS=800
 
 df = pd.read_csv('../SN_y_tot_V2.0.csv', header = 0, delimiter = ";")
 x_train = np.random.random((10, 5))
@@ -38,16 +39,22 @@ def train():
   print(train_x[0])
   print(train_y[0])
   # define and fit the final model
-  model = Sequential()
+  model = models.Sequential()
   #model.add(Input(shape=train_sunspots.shape()))
   #model.add(Dense(4, input_dim=WINDOW, activation='relu'))
-  model.add(LSTM(128, input_shape=(1, WINDOW-1), return_sequences=True))
-  model.add(Dense(20, activation='relu'))
-  model.add(Flatten())
-  model.add(Dense(1, activation='linear'))
-  model.compile(loss='mse', optimizer='adam')
-  model.fit(train_x, train_y, epochs=100000, verbose=1)
-  model.save('mse-adam-{}.h5'.format(WINDOW))
+#  model.add(LSTM(128, input_shape=(1, WINDOW-1), return_sequences=True))
+#  model.add(Dense(20, activation='relu'))
+  model.add(layers.LSTM(LSTM_DIM, input_shape=(1, WINDOW-1), return_sequences=True))
+  model.add(layers.LSTM(LSTM_DIM, input_shape=(1, WINDOW-1), return_sequences=True))
+  model.add(layers.LSTM(LSTM_DIM, input_shape=(1, WINDOW-1), return_sequences=True))
+  model.add(layers.LSTM(LSTM_DIM, input_shape=(1, WINDOW-1)))
+  model.add(layers.Dense(DENSE_DIM, activation='relu'))
+#  model.add(Dropout(0.15))
+#  model.add(Flatten())
+  model.add(layers.Dense(1, activation='linear'))
+  model.compile(loss='mse', optimizer='adagrad')
+  model.fit(train_x, train_y, epochs=EPOCHS, verbose=2)
+  model.save('mse-adam-{}-{}-{}.h5'.format(LSTM_DIM, WINDOW, DENSE_DIM))
 #print(len(train_years))
 #print(len(train_sunspots))
 
@@ -71,7 +78,7 @@ def eval():
   test_y = np.array(test_y)
 #  test_x = np.reshape(test_x, (test_x.shape[0], 1, test_x.shape[1]))
 #  print(test_x.shape)
-  model = load_model('mse-adam-40.h5')
+  model = load_model('mse-adam-512-40-70.h5')
 #  pred_y = model.predict(test_x, verbose=1)
 #  print(test_y)
 #  print(pred_y)
@@ -122,5 +129,5 @@ def eval():
   plt.plot(xrange(1700, 1700+len(sunspot_values)), sunspot_values)
   plt.axvline(x=2017, color='k', linestyle='--')
   plt.show()
-eval()
-#train()
+#eval()
+train()
